@@ -6,6 +6,8 @@
 # https://github.com/voccs/iphone2ical/
 
 # @@@ reset switch
+# @@@ refresh switch?
+# @@@ verbose switch?
 
 # Constants, not variables.  Do not modify.
 DOMAIN="com.voccs.iphone2ical"
@@ -14,6 +16,7 @@ SQLITE=/usr/bin/sqlite3
 OSA=/usr/bin/osascript
 BACKUP_DIR=~/Library/Application\ Support/MobileSync/Backup
 CALL_LOG_FILE=2b2b0084a1bc3a5ac8c27afdf14afb42c61a19ca
+CONTACTS_FILE=31bb7ba8914766d4ba40d6dfb6113c8b614be442
 
 # Start program.
 CUR=`pwd`
@@ -26,7 +29,7 @@ fi
 cd $CUR
 
 # Interactive with the user if not initialized.
-${DEFAULTS} read ${DOMAIN} "initialized" 2>/dev/null
+INIT=`${DEFAULTS} read ${DOMAIN} "initialized" 2>/dev/null`
 if [ $? -ne 0 ] ; then
     ${DEFAULTS} write ${DOMAIN} "initialized" -bool TRUE
 
@@ -42,6 +45,7 @@ if [ $? -ne 0 ] ; then
                 case $yn in
                     Y|y|'' )
                         ${DEFAULTS} write ${DOMAIN} "devices" -array-add ${BACKUP}
+                        ${DEFAULTS} write ${DOMAIN} "names" -dict "${BACKUP}" "${NAME}"
                         echo "> Reading from \"${NAME}\""
                         sleep 2
                         break;;
@@ -80,10 +84,19 @@ if [ $? -ne 0 ] ; then
 fi
 
 # Read from preferred devices.
+CALID=`${DEFAULTS} read ${DOMAIN} "calendar"`
 DEVICES=`${DEFAULTS} read ${DOMAIN} "devices" | xargs | sed -e "s/^( //" -e "s/ )$//" -e "s/,//"`
 for DEVICE in $DEVICES; do
-    DB="${BACKUP_DIR}/${DEVICE}/${CALL_LOG_FILE}"
-    sqlite3 "$DB" "SELECT * FROM call limit 5;"
-    # @@@ format query to best suit adding ical event
+    CALLDB="${BACKUP_DIR}/${DEVICE}/${CALL_LOG_FILE}"
+    CONTACTDB="${BACKUP_DIR}/${DEVICE}/${CONTACTS_FILE}"
+    NAME=`${DEFAULTS} read ${DOMAIN} "names" -dict "${DEVICE} 2>/dev/null | sed -e "s/[{}]//" | xargs | grep "${DEVICE}" | egrep -o "= ([^;*]+);" | sed -e "s/^= //" -e "s/;$//"`
+    LASTID=`${DEFAULTS} read ${DOMAIN} "last" -dict "${DEVICE}" 2>/dev/null | sed -e "s/[{}]//" | xargs | grep "${DEVICE}" | egrep -o "= ([^;*]+);" | sed -e "s/^= //" -e "s/;$//"`
+    if [ $? -eq 1 ] ; then
+        LASTID=0
+    fi
+    echo ${OSA} add-events.applescript "${CALLDB}" "${CONTACTDB}" "${NAME}" "${CALID}" "${LASTID}"
+    LAST=`${OSA} add-events.applescript "${CALLDB}" "${CONTACTDB}" "${NAME}" "${CALID}" "${LASTID}"`
+    ${DEFAULTS} write ${DOMAIN} "last" -dict "${DEVICE}" -int "${LAST}"
 done
-# @@@ LAST dict, keyed to backup, value is highest rowid
+# @@@ replace call log entries in iCal with latest from your contacts? would have to retain device:call id in entry somewhere and be able to look it up / build a hash quickly - or not...
+exit 0
