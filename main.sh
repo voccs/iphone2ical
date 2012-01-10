@@ -89,7 +89,7 @@ DEVICES=`${DEFAULTS} read ${DOMAIN} "devices" | xargs | sed -e "s/^( //" -e "s/ 
 for DEVICE in $DEVICES; do
     CALLDB="${BACKUP_DIR}/${DEVICE}/${CALL_LOG_FILE}"
     CONTACTDB="${BACKUP_DIR}/${DEVICE}/${CONTACTS_FILE}"
-    NAME=`${DEFAULTS} read ${DOMAIN} "names" -dict "${DEVICE} 2>/dev/null | sed -e "s/[{}]//" | xargs | grep "${DEVICE}" | egrep -o "= ([^;*]+);" | sed -e "s/^= //" -e "s/;$//"`
+    NAME=`${DEFAULTS} read ${DOMAIN} "names" -dict "${DEVICE}" 2>/dev/null | sed -e "s/[{}]//" | xargs | grep "${DEVICE}" | egrep -o "= ([^;*]+);" | sed -e "s/^= //" -e "s/;$//"`
     LASTID=`${DEFAULTS} read ${DOMAIN} "last" -dict "${DEVICE}" 2>/dev/null | sed -e "s/[{}]//" | xargs | grep "${DEVICE}" | egrep -o "= ([^;*]+);" | sed -e "s/^= //" -e "s/;$//"`
     if [ $? -eq 1 ] ; then
         LASTID=0
