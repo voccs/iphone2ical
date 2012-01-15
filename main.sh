@@ -94,9 +94,8 @@ for DEVICE in $DEVICES; do
     if [ $? -eq 1 ] ; then
         LASTID=0
     fi
-    echo ${OSA} add-events.applescript "${CALLDB}" "${CONTACTDB}" "${NAME}" "${CALID}" "${LASTID}"
     LAST=`${OSA} add-events.applescript "${CALLDB}" "${CONTACTDB}" "${NAME}" "${CALID}" "${LASTID}"`
-    ${DEFAULTS} write ${DOMAIN} "last" -dict "${DEVICE}" -int "${LAST}"
+    ${DEFAULTS} write ${DOMAIN} "last" -dict "${DEVICE}" "${LAST}"
 done
 # @@@ replace call log entries in iCal with latest from your contacts? would have to retain device:call id in entry somewhere and be able to look it up / build a hash quickly - or not...
 exit 0
