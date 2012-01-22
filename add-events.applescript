@@ -15,7 +15,6 @@ on join(theList, theDelimiter)
 end join
 
 on run argv
-	set RET to 0
 	set CALLDB to item 1 of argv
 	set CONTACTDB to item 2 of argv
 	set PHONENAME to item 3 of argv
@@ -25,7 +24,8 @@ on run argv
 	--set CONTACTDB to "/Users/ryanlee/Library/Application Support/MobileSync/Backup/185128b0d50c97e1e386e6a82ac33605d3589e2a/31bb7ba8914766d4ba40d6dfb6113c8b614be442"
 	--set PHONENAME to "Moore"
 	--set CALID to "3C67DB8B-2A06-4A04-BBB5-9D7C07986712"
-	--set LASTID to 0
+	--set LASTID to 1580
+	set RET to LASTID
 	set tzOffset to time to GMT
 	set main_query to "attach '" & CONTACTDB & "' as ab; SELECT call.rowid, address, strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & ",'unixepoch'), strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & "+duration,'unixepoch'), flags, id, abp.first, abp.last, 'outgoing' from call, ab.ABPerson as abp where call.rowid > " & LASTID & " and flags&1=1 and id=abp.rowid union SELECT call.rowid, address, strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & ",'unixepoch'), strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & "+duration,'unixepoch'), flags, id, abp.first, abp.last, 'incoming' from call, ab.ABPerson as abp, ab.ABMultiValue as mv where call.rowid > " & LASTID & " and flags&1=0 and address=replace(replace(replace(replace(replace(replace(replace(mv.value,'.',''),'-',''),' ',''),'(',''),')',''),'+1',''),'+','') and mv.record_id=abp.rowid union SELECT call.rowid, address, strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & ",'unixepoch'), strftime('%Y-%m-%d-%H-%M-%S',date" & tzOffset & "+duration,'unixepoch'), flags, id, abp.first, abp.last, 'outgoing' from call, ab.ABPerson as abp, ab.ABMultiValue as mv where id=-1 and call.rowid > " & LASTID & " and flags&1=1 and address=replace(replace(replace(replace(replace(replace(replace(mv.value,'.',''),'-',''),' ',''),'(',''),')',''),'+1',''),'+','') and mv.record_id=abp.rowid;"
 	set rows to paragraphs of (do shell script "/usr/bin/sqlite3 -batch \"" & CALLDB & "\" \"" & main_query & "\"")
@@ -52,8 +52,6 @@ on run argv
 				set eventURN to "urn:tel:record:" & PHONENAME & ":" & item 1 of eventInfo
 				set eventStartParts to my split(item 3 of eventInfo, "-")
 				set eventEndParts to my split(item 4 of eventInfo, "-")
-				log eventStartParts
-				log eventEndParts
 				set year of eventStart to item 1 of eventStartParts
 				set month of eventStart to item 2 of eventStartParts
 				set day of eventStart to item 3 of eventStartParts
